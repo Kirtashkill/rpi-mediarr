@@ -1,0 +1,134 @@
+---
+version: "2"
+services:
+    bazarr:
+        image: linuxserver/bazarr:latest
+        container_name: bazarr
+        restart: unless-stopped
+        environment:
+            - UMASK_SET=022 # Control permissions of files and directories created by Bazarr
+            - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London.
+            - PUID=1000 # ID of user to take ownership of application/files
+            - PGID=1000 # GID of user to take ownership of application/files
+        volumes:
+            - ${STORAGE}/series:/tv # Location of your TV Shows
+            - ${STORAGE}/peliculas:/movies # Location of your movies
+            - ./config/bazarr:/config # Bazarr data
+        ports:
+            - 6767:6767/tcp # Allows HTTP access to the internal webserver.
+
+    prowlarr:
+      image: linuxserver/prowlarr:latest
+      container_name: prowlarr
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Etc/UTC
+      volumes:
+        - ./config/prowlarr/data:/config
+      ports:
+        - 9696:9696
+      restart: unless-stopped
+
+    flaresolverr:
+      image: flaresolverr/flaresolverr:latest
+      container_name: flaresolverr
+      environment:
+        - LOG_LEVEL=${LOG_LEVEL:-info}
+        - LOG_HTML=${LOG_HTML:-false}
+        - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+        - TZ=Europe/Madrid
+      ports:
+        - "${PORT:-8191}:8191"
+      restart: unless-stopped
+
+    radarr:
+        image: linuxserver/radarr:latest
+        container_name: radarr
+        restart: unless-stopped
+        environment:
+            - UMASK_SET=022 # control permissions of files and directories created by Radarr
+            - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London, this is required for Radarr
+            - PUID=1000 # for UserID
+            - PGID=1000 # for GroupID
+        volumes:
+            - ${STORAGE}/peliculas:/movies # Location of Movie library on disk (See note in Application setup)
+            - ${STORAGE}/torrents:/downloads # Location of download managers output directory (See note in Application setup)
+            - ./config/radarr:/config # Database and Radarr configs
+        ports:
+            - 7878:7878/tcp # The port for the Radarr webinterface
+
+    sonarr:
+        image: linuxserver/sonarr:latest
+        container_name: sonarr
+        restart: unless-stopped
+        environment:
+            - TZ=Europe/Madrid # Specify a timezone to use
+            - PUID=1000 # User ID to run as
+            - PGID=1000 # Group ID to run as
+        volumes:
+            - ${STORAGE}/series:/data # Location of all your media
+            - ./config/sonarr:/config # Contains all relevant configuration files.
+            - ${STORAGE}/torrents:/downloads
+        ports:
+            - 8989:8989/tcp # Web UI
+
+    readarr:
+      image: linuxserver/readarr:develop
+      container_name: readarr
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Madrid
+      volumes:
+        - ./config/readarr:/config
+        - ${STORAGE}/books:/books #optional
+        - ${STORAGE}/torrents:/downloads #optional
+      ports:
+        - 8787:8787
+      restart: unless-stopped
+
+
+    plex:
+      image: ghcr.io/linuxserver/plex
+      container_name: plex
+      network_mode: host
+      environment:
+          - PUID=1000
+          - PGID=1000
+          - VERSION=docker
+          #- ADVERTISE_IP="http://192.168.1.6:32400/"
+      volumes:
+          - ./config/plex/Plex Media Server:/config
+          - ${STORAGE}/peliculas:/media/movies
+          - ${STORAGE}/series:/media/series
+          - ${STORAGE}/tmp:/tmp
+          - ${STORAGE}/Compartida:/media/compartida
+      restart: unless-stopped
+      ports:
+        - 32400:32400
+        - 8324:8324
+        - 32469:32469
+        - 1900:1900
+        - 32410:32410
+        - 32412:32412
+        - 32413:32413
+        - 32414:32414
+
+    transmission:
+        image : ghcr.io/linuxserver/transmission
+        container_name: transmission
+        volumes:
+            - ./config/transmission:/config
+            - ${STORAGE}/torrents:/downloads
+        ports:
+            - 9091:9091
+            - 51413:51413
+            - 51413:51413/udp
+        expose:
+            - 9091
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/Madrid
+        restart: unless-stopped
