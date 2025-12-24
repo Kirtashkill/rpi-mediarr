@@ -1,5 +1,4 @@
 ---
-version: "2"
 services:
     bazarr:
         image: linuxserver/bazarr:latest
@@ -12,7 +11,7 @@ services:
             - PGID=1000 # GID of user to take ownership of application/files
         volumes:
             - ${STORAGE}/series:/tv # Location of your TV Shows
-            - ${STORAGE}/peliculas:/movies # Location of your movies
+            - ${STORAGE}/films:/movies # Location of your movies
             - ./config/bazarr:/config # Bazarr data
         ports:
             - 6767:6767/tcp # Allows HTTP access to the internal webserver.
@@ -52,7 +51,7 @@ services:
             - PUID=1000 # for UserID
             - PGID=1000 # for GroupID
         volumes:
-            - ${STORAGE}/peliculas:/movies # Location of Movie library on disk (See note in Application setup)
+            - ${STORAGE}/films:/movies # Location of Movie library on disk (See note in Application setup)
             - ${STORAGE}/torrents:/downloads # Location of download managers output directory (See note in Application setup)
             - ./config/radarr:/config # Database and Radarr configs
         ports:
@@ -74,7 +73,7 @@ services:
             - 8989:8989/tcp # Web UI
 
     readarr:
-      image: linuxserver/readarr:develop
+      image: ghcr.io/linuxserver/readarr:arm64v8-develop-0.4.18.2805-ls157
       container_name: readarr
       environment:
         - PUID=1000
@@ -100,10 +99,12 @@ services:
           #- ADVERTISE_IP="http://192.168.1.6:32400/"
       volumes:
           - ./config/plex/Plex Media Server:/config
-          - ${STORAGE}/peliculas:/media/movies
+          - ${STORAGE}/films:/media/movies
           - ${STORAGE}/series:/media/series
           - ${STORAGE}/tmp:/tmp
           - ${STORAGE}/Compartida:/media/compartida
+          - /dev/dri:/dev/dri
+          - /dev/shm/plex:/transcode   # Transcoder temp in RAM
       restart: unless-stopped
       ports:
         - 32400:32400
