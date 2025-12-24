@@ -92,10 +92,13 @@ services:
       image: ghcr.io/linuxserver/plex
       container_name: plex
       network_mode: host
+      group_add:
+          - video
       environment:
           - PUID=1000
           - PGID=1000
           - VERSION=docker
+          - LIBVA_DRIVER_NAME=v4l2_request
           #- ADVERTISE_IP="http://192.168.1.6:32400/"
       volumes:
           - ./config/plex/Plex Media Server:/config
