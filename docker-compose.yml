@@ -1,20 +1,20 @@
 ---
 services:
     bazarr:
-        image: linuxserver/bazarr:latest
-        container_name: bazarr
-        restart: unless-stopped
-        environment:
-            - UMASK_SET=022 # Control permissions of files and directories created by Bazarr
-            - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London.
-            - PUID=1000 # ID of user to take ownership of application/files
-            - PGID=1000 # GID of user to take ownership of application/files
-        volumes:
-            - ${STORAGE}/series:/tv # Location of your TV Shows
-            - ${STORAGE}/films:/movies # Location of your movies
-            - ./config/bazarr:/config # Bazarr data
-        ports:
-            - 6767:6767/tcp # Allows HTTP access to the internal webserver.
+      image: linuxserver/bazarr:latest
+      container_name: bazarr
+      restart: unless-stopped
+      environment:
+        - UMASK_SET=022 # Control permissions of files and directories created by Bazarr
+        - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London.
+        - PUID=1000 # ID of user to take ownership of application/files
+        - PGID=1000 # GID of user to take ownership of application/files
+      volumes:
+        - ${STORAGE}/series:/tv # Location of your TV Shows
+        - ${STORAGE}/films:/movies # Location of your movies
+        - ./config/bazarr:/config # Bazarr data
+      ports:
+        - 6767:6767/tcp # Allows HTTP access to the internal webserver.
 
     prowlarr:
       image: linuxserver/prowlarr:latest
@@ -27,6 +27,9 @@ services:
         - ./config/prowlarr/data:/config
       ports:
         - 9696:9696
+      dns:
+        - 1.1.1.1
+        - 8.8.8.8
       restart: unless-stopped
 
     flaresolverr:
@@ -41,36 +44,52 @@ services:
         - "${PORT:-8191}:8191"
       restart: unless-stopped
 
+    jackett:
+      image: lscr.io/linuxserver/jackett:latest
+      container_name: jackett
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Madrid
+        - AUTO_UPDATE=true #optional
+        - RUN_OPTS= #optional
+      volumes:
+        - ./config/jackett/data:/config
+        - ${STORAGE}/torrents/blackhole:/downloads
+      ports:
+        - 9117:9117
+      restart: unless-stopped
+
     radarr:
-        image: linuxserver/radarr:latest
-        container_name: radarr
-        restart: unless-stopped
-        environment:
-            - UMASK_SET=022 # control permissions of files and directories created by Radarr
-            - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London, this is required for Radarr
-            - PUID=1000 # for UserID
-            - PGID=1000 # for GroupID
-        volumes:
-            - ${STORAGE}/films:/movies # Location of Movie library on disk (See note in Application setup)
-            - ${STORAGE}/torrents:/downloads # Location of download managers output directory (See note in Application setup)
-            - ./config/radarr:/config # Database and Radarr configs
-        ports:
-            - 7878:7878/tcp # The port for the Radarr webinterface
+      image: linuxserver/radarr:latest
+      container_name: radarr
+      restart: unless-stopped
+      environment:
+        - UMASK_SET=022 # control permissions of files and directories created by Radarr
+        - TZ=Europe/Madrid # Specify a timezone to use EG Europe/London, this is required for Radarr
+        - PUID=1000 # for UserID
+        - PGID=1000 # for GroupID
+      volumes:
+        - ${STORAGE}/films:/movies # Location of Movie library on disk (See note in Application setup)
+        - ${STORAGE}/torrents:/downloads # Location of download managers output directory (See note in Application setup)
+        - ./config/radarr:/config # Database and Radarr configs
+      ports:
+        - 7878:7878/tcp # The port for the Radarr webinterface
 
     sonarr:
-        image: linuxserver/sonarr:latest
-        container_name: sonarr
-        restart: unless-stopped
-        environment:
-            - TZ=Europe/Madrid # Specify a timezone to use
-            - PUID=1000 # User ID to run as
-            - PGID=1000 # Group ID to run as
-        volumes:
-            - ${STORAGE}/series:/data # Location of all your media
-            - ./config/sonarr:/config # Contains all relevant configuration files.
-            - ${STORAGE}/torrents:/downloads
-        ports:
-            - 8989:8989/tcp # Web UI
+      image: linuxserver/sonarr:latest
+      container_name: sonarr
+      restart: unless-stopped
+      environment:
+        - TZ=Europe/Madrid # Specify a timezone to use
+        - PUID=1000 # User ID to run as
+        - PGID=1000 # Group ID to run as
+      volumes:
+        - ${STORAGE}/series:/data # Location of all your media
+        - ./config/sonarr:/config # Contains all relevant configuration files.
+        - ${STORAGE}/torrents:/downloads
+      ports:
+        - 8989:8989/tcp # Web UI
 
     readarr:
       image: ghcr.io/linuxserver/readarr:arm64v8-develop-0.4.18.2805-ls157
@@ -94,21 +113,21 @@ services:
       network_mode: host
       shm_size: 2g
       group_add:
-          - video
+        - video
       environment:
-          - PUID=1000
-          - PGID=1000
-          - VERSION=docker
-          - LIBVA_DRIVER_NAME=v4l2_request
-          #- ADVERTISE_IP="http://192.168.1.6:32400/"
+        - PUID=1000
+        - PGID=1000
+        - VERSION=docker
+        - LIBVA_DRIVER_NAME=v4l2_request
+        #- ADVERTISE_IP="http://192.168.1.6:32400/"
       volumes:
-          - ./config/plex/Plex Media Server:/config
-          - ${STORAGE}/films:/media/movies
-          - ${STORAGE}/series:/media/series
-          - ${STORAGE}/tmp:/tmp
-          - ${STORAGE}/Compartida:/media/compartida
-          - /dev/dri:/dev/dri
-          - /dev/shm/plex:/transcode   # Transcoder temp in RAM
+        - ./config/plex/Plex Media Server:/config
+        - ${STORAGE}/films:/media/movies
+        - ${STORAGE}/series:/media/series
+        - ${STORAGE}/tmp:/tmp
+        - ${STORAGE}/Compartida:/media/compartida
+        - /dev/dri:/dev/dri
+        - /dev/shm/plex:/transcode   # Transcoder temp in RAM
       restart: unless-stopped
       ports:
         - 32400:32400
@@ -121,19 +140,19 @@ services:
         - 32414:32414
 
     transmission:
-        image : ghcr.io/linuxserver/transmission
-        container_name: transmission
-        volumes:
-            - ./config/transmission:/config
-            - ${STORAGE}/torrents:/downloads
-        ports:
-            - 9091:9091
-            - 51413:51413
-            - 51413:51413/udp
-        expose:
-            - 9091
-        environment:
-            - PUID=1000
-            - PGID=1000
-            - TZ=Europe/Madrid
-        restart: unless-stopped
+      image : ghcr.io/linuxserver/transmission
+      container_name: transmission
+      volumes:
+        - ./config/transmission:/config
+        - ${STORAGE}/torrents:/downloads
+      ports:
+        - 9091:9091
+        - 51413:51413
+        - 51413:51413/udp
+      expose:
+        - 9091
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Madrid
+      restart: unless-stopped
